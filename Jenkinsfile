@@ -17,7 +17,6 @@ pipeline {
     steps {
         script {
             docker.build("test-image")
-            sh 'docker network create jenkins_net || true'
             sh 'docker run -d --name test_flask --network jenkins_net test-image'
             sleep 5
             sh 'docker ps -q -f name=test_flask || (echo "Container crashed" && exit 1)'
