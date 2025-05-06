@@ -17,7 +17,7 @@ pipeline {
     steps {
         script {
             docker.build("test-image")
-            sh 'docker run -d --name test_flask --network jenkins_net test-image'
+            sh 'docker run -d --rm --name test_flask --network jenkins_net test-image'
             sleep 5
 
             // Check if container is still running
