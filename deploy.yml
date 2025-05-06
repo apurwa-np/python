@@ -6,7 +6,6 @@
       docker_container:
         name: flask
         state: stopped
-        image: apurwasingh/flask
 
     - name: Remove the stopped container
       docker_container:
