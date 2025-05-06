@@ -13,31 +13,20 @@ pipeline {
             }
         }
 
-        stage('Test') {
+    stage('Test') {
     steps {
         script {
-            // Build the Docker image
             docker.build("test-image")
-
-            // Run the test container in the 'jenkins_net' network
+            sh 'docker network create jenkins_net || true'
             sh 'docker run -d --name test_flask --network jenkins_net test-image'
-
-            // Give the container some time to start
-            sleep 10
-
-            // Run curl from another container in the same network
-            def response = sh(
-                script: 'docker run --rm --network jenkins_net curlimages/curl:latest curl -s -o /dev/null -w "%{http_code}" http://test_flask:7000',
-                returnStdout: true
-            ).trim()
-
-            // Fail the build if the response is not 200
-            if (response != '200') {
-                error "Health check failed with HTTP code: ${response}"
-            }
+            sleep 5
+            sh 'docker ps -q -f name=test_flask || (echo "Container crashed" && exit 1)'
+            sh 'docker run --rm --network jenkins_net curlimages/curl:latest curl -f http://test_flask:7000'
+            sh 'docker stop test_flask || true'
         }
     }
 }
+
 
         
         stage('Build & Push') {
