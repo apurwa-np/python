@@ -20,7 +20,7 @@ pipeline {
             docker.build("test-image")
 
             // Run the test container in the 'jenkins_net' network
-            sh 'docker run -d --rm --name test_flask --network jenkins_net test-image'
+            sh 'docker run -d --name test_flask --network jenkins_net test-image'
 
             // Give the container some time to start
             sleep 10
