@@ -8,6 +8,8 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - ./deploy.yml:/root/deploy.yml
     tty: true
+    networks:
+      - jenkins_net
 
   jenkins:
     container_name: jenkins
@@ -19,7 +21,14 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - jenkins_home:/var/jenkins_home
+    networks:
+      - jenkins_net
 
 volumes:
   jenkins_home:
     driver: local
+
+networks:
+  jenkins_net:
+    name: jenkins_net
+    driver: bridge
