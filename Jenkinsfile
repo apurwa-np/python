@@ -16,18 +16,34 @@ pipeline {
         stage('Test') {
             steps {
                 script {
+                    // Build the Docker image
                     docker.build("test-image")
-                    sh "docker run -d --name test_flask -p 8000:7000 test-image"
-                    sleep 15
-                    def code = sh(script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:8000", returnStdout: true).trim()
-                    sh "docker stop test_flask && docker rm test_flask"
-                    if (code != '200') {
-                        error("❌ App test failed with HTTP $code")
+
+                    // Create a Docker network if it doesn't exist
+                    sh 'docker network create test_net || true'
+
+                    // Run the test container in that network
+                    sh 'docker run -d --rm --name test_flask --network test_net test-image'
+
+                    // Give the container some time to start
+                    sleep 5
+
+                    // Run curl from another container in the same network
+                    def response = sh(
+                        script: 'docker run --rm --network test_net curlimages/curl:latest curl -s -o /dev/null -w "%{http_code}" http://test_flask:7000',
+                        returnStdout: true
+                    ).trim()
+
+                    // Stop the test container manually (optional since --rm is used)
+                    sh 'docker stop test_flask || true'
+
+                    // Fail the build if the response is not 200
+                    if (response != '200') {
+                        error "Health check failed with HTTP code: ${response}"
                     }
                 }
             }
         }
-
         stage('Build & Push') {
             steps {
                 script {
