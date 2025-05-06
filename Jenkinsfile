@@ -18,7 +18,7 @@ pipeline {
                 script {
                     docker.build("test-image")
                     sh "docker run -d --name test_flask -p 8000:7000 test-image"
-                    sleep 5
+                    sleep 15
                     def code = sh(script: "curl -s -o /dev/null -w '%{http_code}' http://localhost:8000", returnStdout: true).trim()
                     sh "docker stop test_flask && docker rm test_flask"
                     if (code != '200') {
