@@ -19,12 +19,22 @@ pipeline {
             docker.build("test-image")
             sh 'docker run -d --name test_flask --network jenkins_net test-image'
             sleep 5
-            sh 'docker ps -q -f name=test_flask || (echo "Container crashed" && exit 1)'
+
+            // Check if container is still running
+            def running = sh(script: 'docker ps -q -f name=test_flask', returnStdout: true).trim()
+            if (!running) {
+                error "test_flask container exited early. Likely app.py has errors."
+            }
+
+            // Now do the curl check
             sh 'docker run --rm --network jenkins_net curlimages/curl:latest curl -f http://test_flask:7000'
+
+            // Clean up
             sh 'docker stop test_flask || true'
         }
     }
 }
+
 
 
         
