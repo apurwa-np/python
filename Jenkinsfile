@@ -37,6 +37,10 @@ pipeline {
                     // Save the image locally
                     sh 'docker save -o test-image.tar test-image'
 
+                    
+                     sh 'ls -l /var/jenkins_home/workspace/cicd/test-image.tar'
+                     sh 'chmod 644 /var/jenkins_home/workspace/cicd/test-image.tar'
+
                     // Scan using Trivy in a container
                     sh '''
                         docker run --rm \
