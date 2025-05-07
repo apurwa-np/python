@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE_NAME = 'apurwasingh/flask'
-        DOCKER_IMAGE_TAG = "${BUILD_NUMBER}"
+        DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
 
     stages {
@@ -16,7 +16,7 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    
+                    //docker.build("test-image")
                     sh 'docker run -d --rm --name test_flask --network jenkins_net test-image'
                     sleep 5
 
@@ -33,14 +33,25 @@ pipeline {
 
         stage('Security Scan') {
             steps {
-                sh 'trivy image --exit-code 1 --severity HIGH,CRITICAL test-image'
+                script {
+                    // Save the image locally
+                    sh 'docker save -o test-image.tar test-image'
+
+                    // Scan using Trivy in a container
+                    sh '''
+                        docker run --rm \
+                          -v $(pwd):/root/scan \
+                          aquasec/trivy:latest image --input /root/scan/test-image.tar \
+                          --exit-code 1 --severity HIGH,CRITICAL
+                    '''
+                }
             }
         }
 
-        stage('Tag & Push') {
+        stage('Build & Push') {
             steps {
                 script {
-                    docker.image("test-image").tag("${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}")
+                    docker.build("${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}")
                     docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-credentials') {
                         docker.image("${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}").push()
                     }
@@ -50,18 +61,10 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh "docker exec -u root ansible ansible-playbook /root/deploy.yml"
+                script {
+                    sh "docker exec -u flaskuser ansible ansible-playbook /root/deploy.yml"
+                }
             }
-        }
-    }
-
-    post {
-        always {
-            echo 'Cleaning up unused images...'
-            sh '''
-                docker rmi test-image || true
-                docker image prune -f || true
-            '''
         }
     }
 }
