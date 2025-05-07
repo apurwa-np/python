@@ -40,7 +40,7 @@ pipeline {
                     // Scan using Trivy in a container
                     sh '''
                         docker run --rm \
-                          -v $(pwd):/root/scan \
+                          -v /var/jenkins_home/workspace/cicd:/root/scan \
                           aquasec/trivy:latest image --input /root/scan/test-image.tar \
                           --exit-code 1 --severity HIGH,CRITICAL
                     '''
