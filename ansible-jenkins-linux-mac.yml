@@ -3,13 +3,14 @@ services:
     container_name: ansible
     image: apurwasingh/cansible
     restart: unless-stopped
-    command: tail -f /dev/null
+    command: ["tail", "-f", "/dev/null"]  # Keeps the container alive in a minimal way for now
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
       - ./deploy.yml:/root/deploy.yml
     tty: true
     networks:
       - jenkins_net
+    environment:
+      - DOCKER_HOST=tcp://docker:2375  # Use Docker-in-Docker for the Docker daemon
 
   jenkins:
     container_name: jenkins
@@ -19,10 +20,21 @@ services:
       - "8080:8080"
       - "50000:50000"
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
       - jenkins_home:/var/jenkins_home
     networks:
       - jenkins_net
+    environment:
+      - DOCKER_HOST=tcp://docker:2375  # Use Docker-in-Docker for the Docker daemon
+
+  docker:
+    container_name: docker
+    image: docker:dind  # Docker-in-Docker image
+    privileged: true  # Required to run Docker daemon inside the container
+    restart: unless-stopped
+    ports:
+      - "2375:2375"  # Expose Docker API port
+    networks:
+      - jenkins_net  # Ensure that both Jenkins and Docker containers are on the same network
 
 volumes:
   jenkins_home:

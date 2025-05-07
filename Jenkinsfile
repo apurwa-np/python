@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE_NAME = 'apurwasingh/flask'
-        DOCKER_IMAGE_TAG = 'latest'
+        DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
     }
 
     stages {
@@ -35,7 +35,17 @@ pipeline {
     }
 }
 
-
+ stage('Scan Image with Trivy') {
+            steps {
+                script {
+                    // Run Trivy inside a Docker container to scan the image
+                    sh """
+                        docker run --rm \
+                            aquasec/trivy:latest image --exit-code 1 --severity HIGH,CRITICAL ${DOCKER_IMAGE_NAME}:${DOCKER_IMAGE_TAG}
+                    """
+                }
+            }
+        }
 
         
         stage('Build & Push') {
