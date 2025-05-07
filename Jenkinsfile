@@ -4,6 +4,7 @@ pipeline {
     environment {
         DOCKER_IMAGE_NAME = 'apurwasingh/flask'
         DOCKER_IMAGE_TAG = "${env.BUILD_NUMBER}"
+        DOCKER_HOST = 'tcp://docker:2375'
     }
 
     stages {
