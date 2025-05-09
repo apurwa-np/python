@@ -17,7 +17,7 @@ pipeline {
         stage('Test') {
             steps {
                 script {
-                    //docker.build("test-image")
+                    docker.build("test-image")
                     sh 'docker run -d --rm --name test_flask --network jenkins_net test-image'
                     sleep 5
 
