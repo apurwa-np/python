@@ -18,7 +18,7 @@ pipeline {
             steps {
                 script {
                     docker.build("test-image")
-                    sh 'docker run -d --rm --name test_flask --network jenkins_net test-image'
+                    sh 'docker run -d --rm --network host --name test_flask --network jenkins_net test-image'
                     sleep 5
 
                     def running = sh(script: 'docker ps -q -f name=test_flask', returnStdout: true).trim()
@@ -26,7 +26,7 @@ pipeline {
                         error "test_flask container exited early. Likely app.py has errors."
                     }
 
-                    sh 'docker run --rm --network jenkins_net curlimages/curl:latest curl -f http://test_flask:7000'
+                    sh 'docker run --rm --network host curlimages/curl:latest curl -f http://test_flask:7000'
                     sh 'docker stop test_flask || true'
                 }
             }
