@@ -18,7 +18,7 @@ pipeline {
             steps {
                 script {
                     docker.build("test-image")
-                    sh 'docker run -d --rm --network host --name test_flask --network jenkins_net test-image'
+                    sh 'docker run -d --rm --network host --name test_flask test-image'
                     sleep 5
 
                     def running = sh(script: 'docker ps -q -f name=test_flask', returnStdout: true).trim()
